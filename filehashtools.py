@@ -2,7 +2,7 @@ import zlib
 import hashlib
 import os
 
-#Hash/verification functions; perform operation on specific file
+# Hash/verification functions; perform operation on specific file
 # CRC32
 def crc32hash(filepath):
 	seed = 0
