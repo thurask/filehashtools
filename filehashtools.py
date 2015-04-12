@@ -5,16 +5,26 @@ import os
 #Hash/verification functions; perform operation on specific file
 # CRC32
 def crc32hash(filepath):
-	prev = 0
-	for line in open(filepath, 'rb'):
-		prev = zlib.crc32(line, prev)
-	return "%X"%(prev & 0xFFFFFFFF)
+	seed = 0
+	with open(filepath, 'rb') as file:
+		for line in file:
+			seed = zlib.crc32(line, seed)
+	final = format(seed & 0xFFFFFFFF, "x")
+	return final
+
 # Adler32
-def adler32hash(filepath):
-	prev = 0
-	for line in open(filepath, 'rb'):
-		prev = zlib.adler32(line, prev)
-	return "%X"%(prev & 0xFFFFFFFF)
+def adler32hash(filepath, blocksize=16 * 1024 * 1024):
+	with open(filepath, "rb") as f:
+		data = f.read(blocksize)
+		seed = zlib.adler32(data)
+		rdata = f.read(blocksize)
+		while rdata:
+			for i in range(len(rdata)):
+				seed = zlib.adler32(data[i:]+rdata[:i])
+			data = rdata
+			rdata = f.read(blocksize)
+	final = format(seed & 0xFFFFFFFF, "x")
+	return final
 
 # SHA-1
 def sha1hash(filepath, blocksize=16 * 1024 * 1024):
@@ -101,8 +111,8 @@ def md5hash(filepath, blocksize=16 * 1024 * 1024):
 	return md5.hexdigest()
 
 # Use choice of hash functions for all files in a directory
-def verify(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True):
-	print("CRC32:", crc32, "ADLER32:", adler32, "SHA1:", sha1, "SHA224:", sha224, "SHA256:", sha256, "SHA384:", sha384, "SHA512:", sha512, "MD5:", md5)
+def verifier(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True):
+	print("ADLER32:", adler32, "CRC32:", crc32, "MD5:", md5, "\nSHA1:", sha1, "SHA224:", sha224, "SHA256:", sha256, "\nSHA384:", sha384, "SHA512:", sha512, "\n")
 	hashoutput_crc32 = "CRC32\n"
 	hashoutput_adler32 = "Adler32\n"
 	hashoutput_sha1 = "SHA1\n"
@@ -112,94 +122,75 @@ def verify(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, s
 	hashoutput_sha512 = "SHA512\n"
 	hashoutput_md5 = "MD5\n"
 	for file in os.listdir(workingdir):
-		try:
-			statinfo = os.stat(file)
-			filesize = str(statinfo.st_size) + " bytes"
-		except Exception:
-			filesize = ""
-			pass
 		if os.path.isdir(os.path.join(workingdir, file)):
 			pass  # exclude folders
 		elif file.endswith(".cksum"):
 			pass  # exclude already generated files
 		else:
-			if crc32 == True:
-				print("CRC32:", str(file), "\n")
-				result_crc32 = crc32hash(os.path.join(workingdir, file))
-				hashoutput_crc32 += str(result_crc32.upper())
-				hashoutput_crc32 += " "
-				hashoutput_crc32 += str(file)
-				hashoutput_crc32 += " "
-				hashoutput_crc32 += filesize
-				hashoutput_crc32 += " \n"
 			if adler32 == True:
-				print("Adler32:", str(file), "\n")
+				print("Adler32:", str(file))
 				result_adler32 = adler32hash(os.path.join(workingdir, file))
 				hashoutput_adler32 += str(result_adler32.upper())
 				hashoutput_adler32 += " "
 				hashoutput_adler32 += str(file)
-				hashoutput_adler32 += " "
-				hashoutput_adler32 += filesize
 				hashoutput_adler32 += " \n"
-			if sha1 == True:
-				print("SHA1:", str(file), "\n")
-				result_sha1 = sha1hash(os.path.join(workingdir, file))
-				hashoutput_sha1 += str(result_sha1.upper())
-				hashoutput_sha1 += " "
-				hashoutput_sha1 += str(file)
-				hashoutput_sha1 += " "
-				hashoutput_sha1 += filesize
-				hashoutput_sha1 += " \n"
-			if sha224 == True:
-				print("SHA224:", str(file), "\n")
-				result_sha224 = sha224hash(os.path.join(workingdir, file))
-				hashoutput_sha224 += str(result_sha224.upper())
-				hashoutput_sha224 += " "
-				hashoutput_sha224 += str(file)
-				hashoutput_sha224 += " "
-				hashoutput_sha224 += filesize
-				hashoutput_sha224 += " \n"
-			if sha256 == True:
-				print("SHA256:", str(file), "\n")
-				result_sha256 = sha256hash(os.path.join(workingdir, file))
-				hashoutput_sha256 += str(result_sha256.upper())
-				hashoutput_sha256 += " "
-				hashoutput_sha256 += str(file)
-				hashoutput_sha256 += " "
-				hashoutput_sha256 += filesize
-				hashoutput_sha256 += " \n"
-			if sha384 == True:
-				print("SHA384:", str(file), "\n")
-				result_sha384 = sha384hash(os.path.join(workingdir, file))
-				hashoutput_sha384 += str(result_sha384.upper())
-				hashoutput_sha384 += " "
-				hashoutput_sha384 += str(file)
-				hashoutput_sha384 += " "
-				hashoutput_sha384 += filesize
-				hashoutput_sha384 += " \n"
-			if sha512 == True:
-				print("SHA512:", str(file), "\n")
-				result_sha512 = sha512hash(os.path.join(workingdir, file))
-				hashoutput_sha512 += str(result_sha512.upper())
-				hashoutput_sha512 += " "
-				hashoutput_sha512 += str(file)
-				hashoutput_sha512 += " "
-				hashoutput_sha512 += filesize
-				hashoutput_sha512 += " \n"
 			if md5 == True:
-				print("MD5:", str(file), "\n")
+				print("MD5:", str(file))
 				result_md5 = md5hash(os.path.join(workingdir, file))
 				hashoutput_md5 += str(result_md5.upper())
 				hashoutput_md5 += " "
 				hashoutput_md5 += str(file)
-				hashoutput_md5 += " "
-				hashoutput_md5 += filesize
 				hashoutput_md5 += " \n"
+			if crc32 == True:
+				print("CRC32:", str(file))
+				result_crc32 = crc32hash(os.path.join(workingdir, file))
+				hashoutput_crc32 += str(result_crc32.upper())
+				hashoutput_crc32 += " "
+				hashoutput_crc32 += str(file)
+				hashoutput_crc32 += " \n"
+			if sha1 == True:
+				print("SHA1:", str(file))
+				result_sha1 = sha1hash(os.path.join(workingdir, file))
+				hashoutput_sha1 += str(result_sha1.upper())
+				hashoutput_sha1 += " "
+				hashoutput_sha1 += str(file)
+				hashoutput_sha1 += " \n"
+			if sha224 == True:
+				print("SHA224:", str(file))
+				result_sha224 = sha224hash(os.path.join(workingdir, file))
+				hashoutput_sha224 += str(result_sha224.upper())
+				hashoutput_sha224 += " "
+				hashoutput_sha224 += str(file)
+				hashoutput_sha224 += " \n"
+			if sha256 == True:
+				print("SHA256:", str(file))
+				result_sha256 = sha256hash(os.path.join(workingdir, file))
+				hashoutput_sha256 += str(result_sha256.upper())
+				hashoutput_sha256 += " "
+				hashoutput_sha256 += str(file)
+				hashoutput_sha256 += " \n"
+			if sha384 == True:
+				print("SHA384:", str(file))
+				result_sha384 = sha384hash(os.path.join(workingdir, file))
+				hashoutput_sha384 += str(result_sha384.upper())
+				hashoutput_sha384 += " "
+				hashoutput_sha384 += str(file)
+				hashoutput_sha384 += " \n"
+			if sha512 == True:
+				print("SHA512:", str(file))
+				result_sha512 = sha512hash(os.path.join(workingdir, file))
+				hashoutput_sha512 += str(result_sha512.upper())
+				hashoutput_sha512 += " "
+				hashoutput_sha512 += str(file)
+				hashoutput_sha512 += " \n"
+			print("\n")
 	target = open(os.path.join(workingdir, 'all.cksum'), 'w')
-	if crc32 == True:
-		target.write(hashoutput_crc32 + "\n")
 	if adler32 == True:
 		target.write(hashoutput_adler32 + "\n")
+	if crc32 == True:
+		target.write(hashoutput_crc32 + "\n")
+	if md5 == True:
+		target.write(hashoutput_md5 + "\n")
 	if sha1 == True:
 		target.write(hashoutput_sha1 + "\n")
 	if sha224 == True:
@@ -210,6 +201,4 @@ def verify(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, s
 		target.write(hashoutput_sha384 + "\n")
 	if sha512 == True:
 		target.write(hashoutput_sha512 + "\n")
-	if md5 == True:
-		target.write(hashoutput_md5 + "\n")
 	target.close()
