@@ -129,7 +129,7 @@ def verifier(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False,
 		else:
 			if adler32 == True:
 				print("Adler32:", str(file))
-				result_adler32 = adler32hash(os.path.join(workingdir, file))
+				result_adler32 = adler32hash(os.path.join(workingdir, file), blocksize)
 				hashoutput_adler32 += str(result_adler32.upper())
 				hashoutput_adler32 += " "
 				hashoutput_adler32 += str(file)
