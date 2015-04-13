@@ -112,7 +112,6 @@ def md5hash(filepath, blocksize=16 * 1024 * 1024):
 
 # Use choice of hash functions for all files in a directory
 def verifier(workingdir, blocksize=16 * 1024 * 1024, crc32=False, adler32=False, sha1=True, sha224=False, sha256=False, sha384=False, sha512=False, md5=True):
-	print("ADLER32:", adler32, "CRC32:", crc32, "MD5:", md5, "\nSHA1:", sha1, "SHA224:", sha224, "SHA256:", sha256, "\nSHA384:", sha384, "SHA512:", sha512, "\n")
 	hashoutput_crc32 = "CRC32\n"
 	hashoutput_adler32 = "Adler32\n"
 	hashoutput_sha1 = "SHA1\n"
